@@ -3,7 +3,7 @@
 A simple application for setting keyboard backlight colours on OMEN laptops for Linux.
 
 ## Installation
-*(Word of caution: this will require installing a [kernel module from GitHub]((https://github.com/pelrun/hp-omen-linux-module)). Its author has stated that it **may potentially damage your device**. Though I can state that it works on my machine^(TM), usage is still at your own risk. It may remap some keys as well, so if you've bound anything to your OMEN key for instance, you may have to remap it.)*
+*(Word of caution: this will require installing a [kernel module from GitHub]((https://github.com/pelrun/hp-omen-linux-module)). Its author has stated that it **may potentially damage your device**. Though I can state that it works on my machine<sup>TM</sup>, usage is still at your own risk. It may remap some keys as well, so if you've bound anything to your OMEN key for instance, you may have to remap it.)*
 To install,
 ```sh
 $ chmod +x ./install.sh

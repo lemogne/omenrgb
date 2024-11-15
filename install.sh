@@ -21,6 +21,8 @@ else
 	read rules
 fi
 
+chmod a+rw /sys/devices/platform/hp-wmi/rgb_zones/*
+
 if [ $rules != y ]; then
 	echo -e "\e[93mCopying udev rules to allow non-root access to keyboard backlight kernel modules...\e[0m"
 	echo -e "\e[93mIf there are permissions issues, modify \e[92m/etc/udev/rules.d/backlight.rules\e[93m to suit your configuration.\e[0m"

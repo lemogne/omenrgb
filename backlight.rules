@@ -1,9 +1,4 @@
-RUN+="/bin/chgrp wheel /sys/devices/platform/hp-wmi/rgb_zones/zone00"
-RUN+="/bin/chgrp wheel /sys/devices/platform/hp-wmi/rgb_zones/zone01"
-RUN+="/bin/chgrp wheel /sys/devices/platform/hp-wmi/rgb_zones/zone02"
-RUN+="/bin/chgrp wheel /sys/devices/platform/hp-wmi/rgb_zones/zone03"
-
-RUN+="/bin/chmod g+w /sys/devices/platform/hp-wmi/rgb_zones/zone00"
-RUN+="/bin/chmod g+w /sys/devices/platform/hp-wmi/rgb_zones/zone01"
-RUN+="/bin/chmod g+w /sys/devices/platform/hp-wmi/rgb_zones/zone02"
-RUN+="/bin/chmod g+w /sys/devices/platform/hp-wmi/rgb_zones/zone03"
+RUN+="/bin/chmod a+w /sys/devices/platform/hp-wmi/rgb_zones/zone00"
+RUN+="/bin/chmod a+w /sys/devices/platform/hp-wmi/rgb_zones/zone01"
+RUN+="/bin/chmod a+w /sys/devices/platform/hp-wmi/rgb_zones/zone02"
+RUN+="/bin/chmod a+w /sys/devices/platform/hp-wmi/rgb_zones/zone03"

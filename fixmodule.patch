@@ -1,0 +1,25 @@
+From 4a7dc708cec024c8fb74e0cc0d108c8e8e3c9479 Mon Sep 17 00:00:00 2001
+From: lemogne <87395736+lemogne@users.noreply.github.com>
+Date: Thu, 14 Nov 2024 23:17:48 +0100
+Subject: [PATCH] fix type error on line 1249
+
+---
+ src/hp-wmi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/hp-wmi.c b/src/hp-wmi.c
+index b81651a..192bb79 100644
+--- a/src/hp-wmi.c
++++ b/src/hp-wmi.c
+@@ -1246,7 +1246,7 @@ static struct platform_driver hp_wmi_driver = {
+     .name = "hp-wmi",
+     .pm = &hp_wmi_pm_ops,
+   },
+-  .remove = __exit_p(hp_wmi_bios_remove),
++  .remove = (void (*)(struct platform_device *))__exit_p(hp_wmi_bios_remove),
+ };
+ 
+ static int __init hp_wmi_init(void)
+-- 
+2.47.0
+

@@ -29,7 +29,8 @@ The install script additionally installs the [`hp-omen-linux-module`](https://gi
 
 ## Potential issues
 On newer versions of Linux, there may be an issue installing the [`hp-omen-linux-module`](https://github.com/pelrun/hp-omen-linux-module), since recent changes make it unable to compile properly. 
-To fix, change line 1249 to `.remove = (void (*)(struct platform_device *))__exit_p(hp_wmi_bios_remove),` in `hp-wmi.c` and reinstall the `hp-omen-linux-module`.
+The install script should apply the patch automatically but in case it doesn't work, apply `fixmodule.patch` to `hp-omen-linux-module` and reinstall the module.
+In case it mistakenly applies the patch, you can also revert the change.
 
 ## Code
 Written in fairly normal C++; should be compilable with any compiler from the past 20 years. 

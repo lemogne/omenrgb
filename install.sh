@@ -5,11 +5,17 @@ if [ "$EUID" -ne 0 ]; then
 	exit 1
 fi
 
+# Source: https://unix.stackexchange.com/questions/285924/how-to-compare-a-programs-version-in-a-shell-script
+version_greater_equal() {
+    printf '%s\n%s\n' "$2" "$1" | sort --check=quiet --version-sort
+}
+
 rules=n
 if [ ! -f /sys/devices/platform/hp-wmi/rgb_zones/zone00 ]; then
 	echo -e "\e[93mInstalling \e[92mhp-omen-linux-module\e[0m..."
 	git clone https://github.com/pelrun/hp-omen-linux-module.git
 	cd hp-omen-linux-module
+	version_greater_equal "$(uname -r)" 6.10 && git am ../fixmodule.patch
 	make
 	cd ..
 	rm -rf hp-omen-linux-module

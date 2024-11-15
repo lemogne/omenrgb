@@ -27,6 +27,10 @@ Others: Check if your package manager has the wxWidgets package or alternatively
 
 The install script additionally installs the [`hp-omen-linux-module`](https://github.com/pelrun/hp-omen-linux-module), which you have to install manually if you are just using the build script. 
 
+## Potential issues
+On newer versions of Linux, there may be an issue installing the [`hp-omen-linux-module`](https://github.com/pelrun/hp-omen-linux-module), since recent changes make it unable to compile properly. 
+To fix, change line 1249 to `.remove = (void (*)(struct platform_device *))__exit_p(hp_wmi_bios_remove),` in `hp-wmi.c` and reinstall the `hp-omen-linux-module`.
+
 ## Code
 Written in fairly normal C++; should be compilable with any compiler from the past 20 years. 
 The build/install scripts use `g++` by default; modify `build.sh` to change this behaviour.

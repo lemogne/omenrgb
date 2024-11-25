@@ -29,7 +29,7 @@ The install script additionally installs the [`hp-omen-linux-module`](https://gi
 
 ## Potential issues
 On newer versions of Linux, there may be an issue installing the [`hp-omen-linux-module`](https://github.com/pelrun/hp-omen-linux-module), since recent changes make it unable to compile properly. 
-The install script should apply the patch automatically but in case it doesn't work, apply `fixmodule.patch` to `hp-omen-linux-module` and reinstall the module.
+The install script should apply the patch automatically but in case it doesn't work, apply `patches/wmi*.patch` (depending on your kernel version) to `hp-omen-linux-module` and reinstall the module, then reboot for the changes in permissions to take effect.
 In case it mistakenly applies the patch, you can also revert the change.
 
 ## Code

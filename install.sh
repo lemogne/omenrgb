@@ -15,7 +15,8 @@ if [ ! -f /sys/devices/platform/hp-wmi/rgb_zones/zone00 ]; then
 	echo -e "\e[93mInstalling \e[92mhp-omen-linux-module\e[0m..."
 	git clone https://github.com/pelrun/hp-omen-linux-module.git
 	cd hp-omen-linux-module
-	version_greater_equal "$(uname -r)" 6.10 && git am ../fixmodule.patch
+	version_greater_equal "$(uname -r)" 6.10 && git am ../patches/wmi610.patch
+	version_greater_equal "$(uname -r)" 6.12 && git am ../patches/wmi612.patch
 	make
 	cd ..
 	rm -rf hp-omen-linux-module

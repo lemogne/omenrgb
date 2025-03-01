@@ -22,7 +22,7 @@ Requires wxWidgets to build/install.
 On Arch-based systems: 
 `# pacman -S wxwidgets`
 Debian-based:
-`# pacman -S libwxgtk3.0-dev`
+`# apt install libwxgtk3.0-dev`
 Others: Check if your package manager has the wxWidgets package or alternatively, [build it yourself](https://github.com/wxWidgets/wxWidgets).
 
 The install script additionally installs the [`hp-omen-linux-module`](https://github.com/pelrun/hp-omen-linux-module), which you have to install manually if you are just using the build script. 

@@ -19,21 +19,71 @@ std::string tohex(unsigned char i) {
 	return std::string(1, upper_char) + std::string(1, lower_char);
 }
 
+
+std::string colour_as_hex(wxColour colour) {
+	return tohex(colour.Red()) + tohex(colour.Green()) + tohex(colour.Blue());
+}
+
+std::vector<int> fromhex(std::string hex) {
+	std::vector<int> output;
+
+	for (int i = 0; i < hex.length() / 2; i++) {
+		int res = std::stoi(hex.substr(2 * i, 2), nullptr, 16);
+		output.push_back(res);
+	}
+	
+	return output;
+}
+
+class main_frame;
+
+class preset_frame : public PresetDialog {
+	std::vector<std::string> configurations;
+	std::vector<std::array<std::string, 4>> presets;
+	int current_preset = -1;
+	
+	public:
+	preset_frame(main_frame* parent);
+	
+	void apply(wxCommandEvent& event);
+	void change(wxCommandEvent& event);
+	void add(wxCommandEvent& event);
+	void remove(wxCommandEvent& event);
+	~preset_frame();
+};
+
+
 class main_frame : public MyFrame1 {
 	public:
 	main_frame() : MyFrame1(nullptr) {
 		std::vector<int> zone00 = read_device("zone00");
-		m_colourPicker1->SetColour(wxColour(zone00[0], zone00[1], zone00[2]));
-
 		std::vector<int> zone01 = read_device("zone01");
-		m_colourPicker2->SetColour(wxColour(zone01[0], zone01[1], zone01[2]));
-
 		std::vector<int> zone02 = read_device("zone02");
-		m_colourPicker3->SetColour(wxColour(zone02[0], zone02[1], zone02[2]));
-
 		std::vector<int> zone03 = read_device("zone03");
+
+		set_zones(zone00, zone01, zone02, zone03);
+	}
+	
+	
+	void set_zones(std::vector<int> zone00, std::vector<int> zone01, std::vector<int> zone02, std::vector<int> zone03) {
+		m_colourPicker1->SetColour(wxColour(zone00[0], zone00[1], zone00[2]));
+		m_colourPicker2->SetColour(wxColour(zone01[0], zone01[1], zone01[2]));
+		m_colourPicker3->SetColour(wxColour(zone02[0], zone02[1], zone02[2]));
 		m_colourPicker4->SetColour(wxColour(zone03[0], zone03[1], zone03[2]));
 	}
+	
+	
+	std::array<std::string, 4> get_zones() {
+		std::array<std::string, 4> current_preset;
+		
+		current_preset[0] = colour_as_hex(m_colourPicker1->GetColour());
+		current_preset[1] = colour_as_hex(m_colourPicker2->GetColour());
+		current_preset[2] = colour_as_hex(m_colourPicker3->GetColour());
+		current_preset[3] = colour_as_hex(m_colourPicker4->GetColour());
+		
+		return current_preset;
+	}
+	
 
 	virtual void zone00_change(wxColourPickerEvent& event) {
 		write_device("zone00", event.GetColour());
@@ -66,11 +116,14 @@ class main_frame : public MyFrame1 {
 		std::vector<int> vec{};
 		std::ifstream zone;
 		std::string line;
+		
 		if (open_file(zone, "/sys/devices/platform/hp-wmi/rgb_zones/" + dev))
 			return {255, 255, 255};
+		
 		std::getline(zone, line);
 		int i = 0;
 		bool is_num = false;
+		
 		for (char c : line) {
 			switch (c) {
 				case '0' ... '9':
@@ -88,22 +141,146 @@ class main_frame : public MyFrame1 {
 					continue;
 			}
 		}
+		
 		if (is_num) 
 			vec.push_back(i);
 
 		zone.close();
 		return vec;
 	}
+	
 
 	void write_device(std::string dev, wxColour colour) {
+		write_device(dev, colour_as_hex(colour));
+	}
+	
+
+	void write_device(std::string dev, std::string colour) {
 		std::ofstream zone;
-		std::string line = tohex(colour.Red()) + tohex(colour.Green()) + tohex(colour.Blue());
+		
 		if (open_file(zone, "/sys/devices/platform/hp-wmi/rgb_zones/" + dev))
 			return;
-		zone << line;
+		
+		zone << colour;
 		zone.close();
 	}
+	
+	
+	virtual void open_presets(wxCommandEvent& event) {
+		preset_frame frame(this);
+		frame.ShowModal();
+	}
 };
+
+
+preset_frame::preset_frame(main_frame* parent) : PresetDialog(parent) {
+	// Load presets from file
+	std::string home = getenv("HOME");
+	std::ifstream file;
+	parent->open_file(file, home + "/.config/omenrgb.cfg");
+	
+	if (!file)
+		return;
+	
+	std::string line;
+	
+	while (std::getline(file, line)) {
+		std::string name;
+		std::array<std::string, 4> colors;
+		std::stringstream ss(line);
+		
+		std::getline(ss, name, '\t');
+		
+		for (int i = 0; i < 4; i++) 
+			std::getline(ss, colors[i], '\t');
+		
+		m_preset->Append(name);
+		configurations.push_back(name);
+		presets.push_back(colors);
+	}
+	
+	file.close();
+}
+
+
+void preset_frame::apply(wxCommandEvent& event) {
+	main_frame* parent = (main_frame*) GetParent();
+	
+	current_preset = m_preset->GetSelection();
+	
+	if (current_preset == wxNOT_FOUND) {
+		current_preset = -1;
+		return;
+	}
+	
+	parent->set_zones(
+		fromhex(presets[current_preset][0]), 
+		fromhex(presets[current_preset][1]), 
+		fromhex(presets[current_preset][2]), 
+		fromhex(presets[current_preset][3])
+	);
+	
+	parent->write_device("zone00", presets[current_preset][0]);
+	parent->write_device("zone01", presets[current_preset][1]);
+	parent->write_device("zone02", presets[current_preset][2]);
+	parent->write_device("zone03", presets[current_preset][3]);
+}
+
+
+void preset_frame::change(wxCommandEvent& event) {
+	// TODO: add confirmation dialog
+
+	main_frame* parent = (main_frame*) GetParent();
+	
+	current_preset = m_preset->GetSelection();
+	
+	if (current_preset == wxNOT_FOUND) {
+		current_preset = -1;
+		return;
+	}
+
+	presets[current_preset] = parent->get_zones();
+}
+
+
+void preset_frame::add(wxCommandEvent& event) {
+	TextEntryDialog dialog(this);
+	if (dialog.ShowModal() == wxID_OK) {
+		wxString name = dialog.m_name->GetLineText(0);
+		configurations.push_back(name.ToStdString());
+		m_preset->Append(name);
+		
+		main_frame* parent = (main_frame*) GetParent();
+		presets.push_back(parent->get_zones());
+	}
+}
+
+
+void preset_frame::remove(wxCommandEvent& event) {
+
+}
+
+
+preset_frame::~preset_frame() {
+	std::string home = getenv("HOME");
+	main_frame* parent = (main_frame*) GetParent();
+	std::ofstream file;
+	parent->open_file(file, home + "/.config/omenrgb.cfg");
+	
+	if (!file)
+		return;
+		
+	for (int i = 0; i < presets.size(); i++) {
+		file << configurations[i];
+		for (int j = 0; j < 4; j++)
+			file << '\t' << presets[i][j];
+		
+		file << '\n'; 
+	}
+	
+	file.close();
+}
+
 
 bool OmenRGB::OnInit() {
 	main_frame* frame = new main_frame();

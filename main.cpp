@@ -1,5 +1,6 @@
 #include "omenrgb.cpp"
 #include <wx/app.h> 
+#include <wx/msgdlg.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -228,18 +229,19 @@ void preset_frame::apply(wxCommandEvent& event) {
 
 
 void preset_frame::change(wxCommandEvent& event) {
-	// TODO: add confirmation dialog
-
 	main_frame* parent = (main_frame*) GetParent();
-	
 	current_preset = m_preset->GetSelection();
 	
 	if (current_preset == wxNOT_FOUND) {
 		current_preset = -1;
 		return;
 	}
+	
+	std::string preset = configurations[current_preset];
+	wxMessageDialog dialog(NULL, "Do you really want to modify the preset '" + preset +"'?", "Modify Preset...", wxYES_NO | wxICON_QUESTION);
 
-	presets[current_preset] = parent->get_zones();
+	if (dialog.ShowModal() == wxID_YES)
+		presets[current_preset] = parent->get_zones();
 }
 
 
@@ -257,7 +259,24 @@ void preset_frame::add(wxCommandEvent& event) {
 
 
 void preset_frame::remove(wxCommandEvent& event) {
-
+	main_frame* parent = (main_frame*) GetParent();
+	current_preset = m_preset->GetSelection();
+	
+	if (current_preset == wxNOT_FOUND) {
+		current_preset = -1;
+		return;
+	}
+	
+	std::string preset = configurations[current_preset];
+	
+	wxMessageDialog dialog(NULL, "Do you really want to remove the preset '" + preset +"'?", "Remove Preset...", wxYES_NO | wxICON_QUESTION);
+	
+	if (dialog.ShowModal() == wxID_YES) {
+		m_preset->Delete(current_preset);
+		configurations.erase(configurations.begin() + current_preset);
+		presets.erase(presets.begin() + current_preset);
+		current_preset = -1;
+	}
 }
 
 

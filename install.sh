@@ -7,16 +7,17 @@ fi
 
 # Source: https://unix.stackexchange.com/questions/285924/how-to-compare-a-programs-version-in-a-shell-script
 version_greater_equal() {
-    printf '%s\n%s\n' "$2" "$1" | sort --check=quiet --version-sort
+	printf '%s\n%s\n' "$2" "$1" | sort --check=quiet --version-sort
 }
 
 rules=n
 if [ ! -f /sys/devices/platform/hp-wmi/rgb_zones/zone00 ]; then
 	echo -e "\e[93mInstalling \e[92mhp-omen-linux-module\e[0m..."
-	git clone https://github.com/pelrun/hp-omen-linux-module.git
+	git clone https://github.com/lemogne/hp-omen-linux-module.git
 	cd hp-omen-linux-module
-	version_greater_equal "$(uname -r)" 6.10 && git am ../patches/wmi610.patch
-	version_greater_equal "$(uname -r)" 6.12 && git am ../patches/wmi612.patch
+	version_greater_equal "$(uname -r)" 7.0 || git checkout ae0d8c1816899065465455bbb077040d785d46a3
+	version_greater_equal "$(uname -r)" 6.12 || git checkout 77ec80ae161e2fc4f2d5d290f1b7ccdcc11925a0
+	version_greater_equal "$(uname -r)" 6.10 || git checkout 9d1edb1d2b2f9bf6b5ac0ba188d7d421fc239d2b
 	make
 	cd ..
 	rm -rf hp-omen-linux-module

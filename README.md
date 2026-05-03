@@ -18,11 +18,14 @@ $ ./build.sh
 ```
 
 ## Dependencies
-Requires wxWidgets to build/install.
+Requires wxWidgets to build/install the GUI application (not required for `hp-omen-linux-module` or its patches).
+
 On Arch-based systems: 
 `# pacman -S wxwidgets`
+
 Debian-based:
 `# apt install libwxgtk3.0-dev`
+
 Others: Check if your package manager has the wxWidgets package or alternatively, [build it yourself](https://github.com/wxWidgets/wxWidgets).
 
 The install script additionally installs the [`hp-omen-linux-module`](https://github.com/pelrun/hp-omen-linux-module), which you have to install manually if you are just using the build script. 

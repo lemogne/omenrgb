@@ -173,7 +173,6 @@ unsigned char hex(unsigned char x) {
 
 int main() {
 	signal(SIGINT, term);
-	//signal(SIGIO, read_pipe);
 
 	int uid = getuid();
 	int err;
@@ -199,18 +198,6 @@ int main() {
 		remove(path.c_str());
 		return err;
 	}
-	
-	if (err = fcntl(fd, F_SETOWN, getpid())) {
-		std::cerr << "Could not change file descriptor. (" << err << ")\n";
-		remove(path.c_str());
-		return err;
-	}
-	/*
-	if (err = fcntl(fd, F_SETFL, O_ASYNC)) {
-		std::cerr << "Could not change file descriptor. (" << err << ")\n";
-		remove(path.c_str());
-		return err;
-	}*/
 	
 	while (true) {
 		read_pipe(0);

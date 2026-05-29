@@ -8,6 +8,9 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <array>
+#include <fstream>
+#include <sstream>
 #include <iostream>
 
 const int ZONE_N = 4;
@@ -15,16 +18,17 @@ char buffer[256] = {0};
 int fd = 0;
 std::string path;
 std::string zones_path = "/sys/devices/platform/hp-wmi/rgb_zones/";
+std::string anim_path;
+std::string palette_path;
 int zone_fd[ZONE_N];
 
-typedef unsigned char color[3];
+typedef std::array<unsigned char,3> color;
 
 typedef std::vector<color> palette;
 
 struct animation_step {
 	float start_colors[ZONE_N];
 	int duration_ms;
-	bool is_interpolated;
 };
 
 typedef std::vector<animation_step> animation;
@@ -32,12 +36,13 @@ typedef std::vector<animation_step> animation;
 int anim = 0;
 int pal = 0;
 int anim_step = 0;
+unsigned char brightness = 255;
+float speed = 1.0f;
 std::vector<animation> animations;
 std::vector<palette> palettes;
 
 timeval step_start;
 timeval current_time;
-
 
 
 void close_zone_fd() {
@@ -69,6 +74,92 @@ void init_zone_fd() {
 }
 
 
+void parse_colour(color* c, std::string s) {
+	for (size_t i = 0; i < 3; i++) 
+		(*c)[i] = (unsigned char) std::stoi(s.substr(2 * i, 2), nullptr, 16);
+}
+
+
+void init_anim() {
+	std::string home = getenv("HOME");
+	std::ifstream file;
+	file.open(home + "/.config/omenrgb/animations.cfg");
+	
+	if (!file) {
+		std::cerr << "Couldn't open animation file\n";
+		return;
+	}
+	
+	animations.clear();
+	
+	std::string line;
+	
+	while (std::getline(file, line)) {
+		std::string el;
+		std::stringstream ss(line);
+		animation_step step;
+		
+		if (line.length() == 0 || line[0] < '0' || line[0] > '9') {
+			if (line.length() > 0 && line[0] == '[')
+				animations.push_back(animation());
+			continue;
+		} else if (animations.size() == 0) {
+			std::cerr << "Apparent animation steps ignored (no preceding animation label): " << line << '\n';
+			continue;
+		}
+		
+		std::getline(ss, el, '\t');
+		step.duration_ms = std::stoi(el);
+		
+		for (int i = 0; i < ZONE_N; i++) {
+			std::getline(ss, el, '\t');
+			step.start_colors[i] = std::stof(el);
+		}
+		
+		animations.back().push_back(step);
+	}
+	
+	file.close();
+}
+
+
+void init_palette() {
+	std::string home = getenv("HOME");
+	std::ifstream file;
+	file.open(home + "/.config/omenrgb/palettes.cfg");
+	
+	if (!file) {
+		std::cerr << "Couldn't open palette file\n";
+		return;
+	}
+	
+	palettes.clear();
+	
+	std::string line;
+	
+	while (std::getline(file, line)) {
+		std::string el;
+		std::stringstream ss(line);
+		palette p;
+		color c;
+		
+		if (line.length() == 0 || line[0] == '#') 
+			continue;
+		
+		std::getline(ss, el, '\t');
+		
+		while (std::getline(ss, el, '\t')) {
+			parse_colour(&c, el);
+			p.push_back(c);
+		}
+		
+		palettes.push_back(p);
+	}
+	
+	file.close();
+}
+
+
 void term(int signum) {
 	cleanup();
 	exit(-1);
@@ -84,13 +175,15 @@ void set_rgb(int zone, char* colour) {
 // 
 // Possible instructions:
 // Zzrrggbb - sets zone z to color hex #rrggbb
-// Bx - sets brightness to x (0 - 100)
+// Bx - sets brightness to x (0 - 255)
 // Ax - plays animation x (uint)
 // Px - set palette to x (uint)
 // QSz - queries color of zone z; response: color
 // QA - queries currently playing animation; response: int
 // QP - queries currently used palette
-// Sx - sets speed to x (0 - 100)
+// RA - reload animations
+// RP - reload palette
+// Sx - sets speed to x (0 - 255)
 //
 // Response is fed through separate response pipe [responses currently unsupported]
 // Response data types:
@@ -137,6 +230,39 @@ void read_pipe(int signum) {
 				gettimeofday(&current_time, NULL);
 				step_start = current_time;
 			} break;
+
+			case 'P': {
+				pal = std::atoi(&buffer[1]);
+				
+				if (pal < 0 || pal > animations.size()) {
+					std::cerr << "Invalid palette: " << pal << '\n';
+					pal = 0;
+					break;
+				}
+				
+				anim_step = 0;
+				gettimeofday(&current_time, NULL);
+				step_start = current_time;
+			} break;
+
+			case 'R': {
+				if (buffer[1] == 'A')
+					init_anim();
+				else if (buffer[1] == 'P')
+					init_palette();
+				else 
+					std::cerr << "Invalid command: " << buffer << '\n';
+				
+				anim = 0;
+				pal = 0;
+			} break;
+			
+			case 'S': {
+				speed = std::stof(&buffer[1]);
+				anim_step = 0;
+				gettimeofday(&current_time, NULL);
+				step_start = current_time;
+			} break;
 			
 			default:
 			std::cerr << "Invalid command: " << buffer[0] << '\n';
@@ -179,6 +305,8 @@ int main() {
 	path = "/run/user/" + std::to_string(uid) + "/omenrgb.pipe";
 	
 	init_zone_fd();
+	init_palette();
+	init_anim();
 	
 	if (err = mkfifo(path.c_str(), 0600)) {
 		if (err == -1) {
@@ -207,45 +335,49 @@ int main() {
 		
 		if (anim > animations.size())
 			anim = 0;
-		else if (anim) {
+		else if (anim && pal) {
 			gettimeofday(&current_time, NULL);
-			int dtime = diff_usec(&current_time, &step_start) / 1000;
+			int dtime = (speed * diff_usec(&current_time, &step_start)) / 1000;
 			
-			if (dtime > animations[anim][anim_step].duration_ms) {
+			if (dtime > animations[anim - 1][anim_step].duration_ms) {
 				step_start = current_time;
-				set_msec(&step_start, dtime - animations[anim][anim_step].duration_ms);
+				set_msec(&step_start, (dtime - animations[anim - 1][anim_step].duration_ms) / speed);
+				dtime -= animations[anim - 1][anim_step].duration_ms;
 				anim_step++;
 			}
 			
-			if (anim_step >= animations[anim].size()) {
+			if (anim_step >= animations[anim - 1].size()) {
 				anim_step = 0;
 			}
 			
-			bool interpolate = animations[anim][anim_step].is_interpolated;
 			int next_step = anim_step + 1;
 			
-			if (next_step >= animations[anim].size())
+			if (next_step >= animations[anim - 1].size())
 				next_step = 0;
 			
 			for (int zone = 0; zone < ZONE_N; zone++) {
 				char colour_hex[6];
 				
-				float current = animations[anim][anim_step].start_colors[zone];
-				float next = animations[anim][next_step].start_colors[zone];
+				float current = animations[anim - 1][anim_step].start_colors[zone];
+				float next = animations[anim - 1][next_step].start_colors[zone];
 				
-				float step_frac = (float) dtime / (float) animations[anim][anim_step].duration_ms;
-				float palette_colour = ((1 - step_frac) * current + step_frac * next) * palettes[pal].size();
+				float step_frac = (float) dtime / (float) animations[anim - 1][anim_step].duration_ms;
+				float palette_colour = ((1 - step_frac) * current + step_frac * next) * palettes[pal - 1].size();
+				
+				if (palette_colour >= palettes[pal - 1].size()) {
+					palette_colour = fmod(palette_colour, palettes[pal - 1].size());
+				}
 				
 				int prev_colour = palette_colour;
 				int next_colour = palette_colour + 1;
 				
-				if (next_colour >= palettes[pal].size())
-					next_colour = 0;
+				if (next_colour >= palettes[pal - 1].size())
+					next_colour %= palettes[pal - 1].size();
 				
 				float r = palette_colour - prev_colour;
 				
 				for (int i = 0; i < 3; i++) {
-					int colour = (1 - r) * palettes[pal][prev_colour][i] + r * palettes[pal][next_colour][i];
+					int colour = (1 - r) * palettes[pal - 1][prev_colour][i] + r * palettes[pal - 1][next_colour][i];
 					
 					colour_hex[2 * i] = hex(colour >> 4);
 					colour_hex[2 * i + 1] = hex(colour);

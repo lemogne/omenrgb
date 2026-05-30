@@ -18,31 +18,29 @@ char buffer[256] = {0};
 int fd = 0;
 std::string path;
 std::string zones_path = "/sys/devices/platform/hp-wmi/rgb_zones/";
-std::string anim_path;
-std::string palette_path;
+std::string anim_path = "/.config/omenrgb/animations.cfg";
+std::string palette_path = "/.config/omenrgb/palettes.cfg";
 int zone_fd[ZONE_N];
-
-typedef std::array<unsigned char,3> color;
-
-typedef std::vector<color> palette;
 
 struct animation_step {
 	float start_colors[ZONE_N];
 	int duration_ms;
 };
 
+typedef std::array<unsigned char,3> color;
+typedef std::vector<color> palette;
 typedef std::vector<animation_step> animation;
+
+std::vector<animation> animations;
+std::vector<palette> palettes;
+timeval step_start;
+timeval current_time;
 
 int anim = 0;
 int pal = 0;
 int anim_step = 0;
 unsigned char brightness = 255;
 float speed = 1.0f;
-std::vector<animation> animations;
-std::vector<palette> palettes;
-
-timeval step_start;
-timeval current_time;
 
 
 void close_zone_fd() {
@@ -83,7 +81,7 @@ void parse_colour(color* c, std::string s) {
 void init_anim() {
 	std::string home = getenv("HOME");
 	std::ifstream file;
-	file.open(home + "/.config/omenrgb/animations.cfg");
+	file.open(home + anim_path);
 	
 	if (!file) {
 		std::cerr << "Couldn't open animation file\n";
@@ -100,8 +98,9 @@ void init_anim() {
 		animation_step step;
 		
 		if (line.length() == 0 || line[0] < '0' || line[0] > '9') {
-			if (line.length() > 0 && line[0] == '[')
+			if (line.length() > 0 && line[0] == '[') 
 				animations.push_back(animation());
+
 			continue;
 		} else if (animations.size() == 0) {
 			std::cerr << "Apparent animation steps ignored (no preceding animation label): " << line << '\n';
@@ -126,7 +125,7 @@ void init_anim() {
 void init_palette() {
 	std::string home = getenv("HOME");
 	std::ifstream file;
-	file.open(home + "/.config/omenrgb/palettes.cfg");
+	file.open(home + palette_path);
 	
 	if (!file) {
 		std::cerr << "Couldn't open palette file\n";
@@ -193,7 +192,7 @@ void set_rgb(int zone, char* colour) {
 // Bb - boolean b (0 - 1)
 // Ex - error string "x"
 
-void read_pipe(int signum) {
+void read_pipe() {
 	int n = read(fd, buffer, sizeof(buffer) - 1);
 	
 	if (n) {
@@ -224,6 +223,10 @@ void read_pipe(int signum) {
 					std::cerr << "Invalid animation: " << anim << '\n';
 					anim = 0;
 					break;
+				} else if (animations[anim - 1].size() == 0) {
+					std::cerr << "No steps in animation " << anim << '\n';
+					anim = 0;
+					break;
 				}
 				
 				anim_step = 0;
@@ -234,8 +237,12 @@ void read_pipe(int signum) {
 			case 'P': {
 				pal = std::atoi(&buffer[1]);
 				
-				if (pal < 0 || pal > animations.size()) {
+				if (pal < 0 || pal > palettes.size()) {
 					std::cerr << "Invalid palette: " << pal << '\n';
+					pal = 0;
+					break;
+				} else if (palettes.size() > 0 && palettes[pal - 1].size() == 0) {
+					std::cerr << "No colours in palette: " << pal << '\n';
 					pal = 0;
 					break;
 				}
@@ -297,6 +304,75 @@ unsigned char hex(unsigned char x) {
 }
 
 
+
+void do_anim_step() {
+	gettimeofday(&current_time, NULL);
+	int dtime = (speed * diff_usec(&current_time, &step_start)) / 1000;
+	int step_duration = animations[anim - 1][anim_step].duration_ms;
+	
+	// Advance to next animation step
+	while (dtime >= step_duration) {
+		step_start = current_time;
+		set_msec(&step_start, (dtime - step_duration) / speed);
+		dtime -= step_duration;
+		anim_step++;
+		
+		if (anim_step >= animations[anim - 1].size())
+			anim_step = 0;
+		
+		step_duration = animations[anim - 1][anim_step].duration_ms;
+	}
+	
+	// Regularise animation step number
+	if (anim_step >= animations[anim - 1].size())
+		anim_step = 0;
+	
+	int next_step = anim_step + 1;
+	
+	if (next_step >= animations[anim - 1].size())
+		next_step = 0;
+	
+
+	animation current_animation = animations[anim - 1];
+	palette current_palette = palettes[pal - 1];
+	size_t pal_size = current_palette.size();
+	float step_frac = (float) dtime / (float) current_animation[anim_step].duration_ms;
+
+	for (int zone = 0; zone < ZONE_N; zone++) {
+		char colour_hex[6];
+		
+		float current = current_animation[anim_step].start_colors[zone];
+		float next = current_animation[next_step].start_colors[zone];
+		
+		// Compute position in palette from interpolated steps
+		float palette_colour = ((1 - step_frac) * current + step_frac * next) * pal_size;
+		
+		if (palette_colour >= pal_size)
+			palette_colour = fmod(palette_colour, pal_size);
+		else if (palette_colour < 0)
+			palette_colour = 0;
+		
+		int prev_colour = palette_colour;
+		int next_colour = palette_colour + 1;
+		float r = palette_colour - prev_colour;
+		
+		if (next_colour >= pal_size)
+			next_colour %= pal_size;
+		
+		for (int i = 0; i < 3; i++) {
+			// Interpolate palette colours
+			int colour = (1 - r) * current_palette[prev_colour][i] + r * current_palette[next_colour][i];
+			
+			colour_hex[2 * i] = hex(colour >> 4);
+			colour_hex[2 * i + 1] = hex(colour);
+		}
+		
+		set_rgb(zone, colour_hex);
+	}
+}
+
+
+
 int main() {
 	signal(SIGINT, term);
 
@@ -318,7 +394,6 @@ int main() {
 		}
 	}
 	
-	// Example of why exceptions are superior to error return values/types:
 	fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
 	
 	if (fd < 0) {
@@ -328,7 +403,7 @@ int main() {
 	}
 	
 	while (true) {
-		read_pipe(0);
+		read_pipe();
 		
 		if (pal > palettes.size())
 			pal = 0;
@@ -336,55 +411,7 @@ int main() {
 		if (anim > animations.size())
 			anim = 0;
 		else if (anim && pal) {
-			gettimeofday(&current_time, NULL);
-			int dtime = (speed * diff_usec(&current_time, &step_start)) / 1000;
-			
-			if (dtime > animations[anim - 1][anim_step].duration_ms) {
-				step_start = current_time;
-				set_msec(&step_start, (dtime - animations[anim - 1][anim_step].duration_ms) / speed);
-				dtime -= animations[anim - 1][anim_step].duration_ms;
-				anim_step++;
-			}
-			
-			if (anim_step >= animations[anim - 1].size()) {
-				anim_step = 0;
-			}
-			
-			int next_step = anim_step + 1;
-			
-			if (next_step >= animations[anim - 1].size())
-				next_step = 0;
-			
-			for (int zone = 0; zone < ZONE_N; zone++) {
-				char colour_hex[6];
-				
-				float current = animations[anim - 1][anim_step].start_colors[zone];
-				float next = animations[anim - 1][next_step].start_colors[zone];
-				
-				float step_frac = (float) dtime / (float) animations[anim - 1][anim_step].duration_ms;
-				float palette_colour = ((1 - step_frac) * current + step_frac * next) * palettes[pal - 1].size();
-				
-				if (palette_colour >= palettes[pal - 1].size()) {
-					palette_colour = fmod(palette_colour, palettes[pal - 1].size());
-				}
-				
-				int prev_colour = palette_colour;
-				int next_colour = palette_colour + 1;
-				
-				if (next_colour >= palettes[pal - 1].size())
-					next_colour %= palettes[pal - 1].size();
-				
-				float r = palette_colour - prev_colour;
-				
-				for (int i = 0; i < 3; i++) {
-					int colour = (1 - r) * palettes[pal - 1][prev_colour][i] + r * palettes[pal - 1][next_colour][i];
-					
-					colour_hex[2 * i] = hex(colour >> 4);
-					colour_hex[2 * i + 1] = hex(colour);
-				}
-				
-				set_rgb(zone, colour_hex);
-			}
+			do_anim_step();
 			
 			usleep(16000);	// = 0.016 s
 		} else {

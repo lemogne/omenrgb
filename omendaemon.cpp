@@ -39,7 +39,7 @@ timeval current_time;
 int anim = 0;
 int pal = 0;
 int anim_step = 0;
-unsigned char brightness = 255;
+float brightness = 1.0f;
 float speed = 1.0f;
 
 
@@ -271,6 +271,15 @@ void read_pipe() {
 				step_start = current_time;
 			} break;
 			
+			case 'B': {
+				brightness = std::stof(&buffer[1]);
+				
+				if (brightness < 0.0f || brightness > 1.0f) {
+					std::cerr << "Invalid brightness: " << brightness << '\n';
+					brightness = 1.0f;
+				}
+			} break;
+			
 			default:
 			std::cerr << "Invalid command: " << buffer[0] << '\n';
 		}
@@ -362,6 +371,7 @@ void do_anim_step() {
 		for (int i = 0; i < 3; i++) {
 			// Interpolate palette colours
 			int colour = (1 - r) * current_palette[prev_colour][i] + r * current_palette[next_colour][i];
+			colour *= brightness;
 			
 			colour_hex[2 * i] = hex(colour >> 4);
 			colour_hex[2 * i + 1] = hex(colour);

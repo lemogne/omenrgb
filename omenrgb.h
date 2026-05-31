@@ -15,14 +15,18 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/clrpicker.h>
+#include <wx/choice.h>
 #include <wx/sizer.h>
 #include <wx/button.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/icon.h>
+#include <wx/clrpicker.h>
+#include <wx/collpane.h>
+#include <wx/panel.h>
+#include <wx/slider.h>
+#include <wx/notebook.h>
 #include <wx/dialog.h>
-#include <wx/choice.h>
 #include <wx/textctrl.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -35,7 +39,13 @@ class MyFrame1 : public wxDialog
 	private:
 
 	protected:
-		wxStaticText* m_staticText1;
+		wxNotebook* m_notebook1;
+		wxPanel* m_panel1;
+		wxStaticText* m_staticText10;
+		wxChoice* m_choice3;
+		wxButton* m_button_add;
+		wxButton* m_button_delete;
+		wxCollapsiblePane* m_collapsiblePane1;
 		wxStaticText* m_staticText2;
 		wxColourPickerCtrl* m_colourPicker1;
 		wxStaticText* m_staticText3;
@@ -44,14 +54,25 @@ class MyFrame1 : public wxDialog
 		wxColourPickerCtrl* m_colourPicker3;
 		wxStaticText* m_staticText31;
 		wxColourPickerCtrl* m_colourPicker4;
-		wxButton* m_button_presets;
+		wxButton* m_button_set;
+		wxButton* m_button10;
+		wxButton* m_button101;
+		wxPanel* m_panel2;
+		wxStaticText* m_staticText11;
+		wxSlider* m_slider1;
+		wxStaticText* m_staticText9;
+		wxChoice* m_choice2;
+		wxButton* m_button_add1;
+		wxButton* m_button_delete1;
 
 		// Virtual event handlers, override them in your derived class
+		virtual void add( wxCommandEvent& event ) { event.Skip(); }
+		virtual void remove( wxCommandEvent& event ) { event.Skip(); }
 		virtual void zone00_change( wxColourPickerEvent& event ) { event.Skip(); }
 		virtual void zone01_change( wxColourPickerEvent& event ) { event.Skip(); }
 		virtual void zone02_change( wxColourPickerEvent& event ) { event.Skip(); }
 		virtual void zone03_change( wxColourPickerEvent& event ) { event.Skip(); }
-		virtual void open_presets( wxCommandEvent& event ) { event.Skip(); }
+		virtual void apply( wxCommandEvent& event ) { event.Skip(); }
 
 
 	public:

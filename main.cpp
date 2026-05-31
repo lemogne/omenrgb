@@ -36,23 +36,6 @@ std::vector<int> fromhex(std::string hex) {
 	return output;
 }
 
-class main_frame;
-
-class preset_frame : public PresetDialog {
-	std::vector<std::string> configurations;
-	std::vector<std::array<std::string, 4>> presets;
-	int current_preset = -1;
-	
-	public:
-	preset_frame(main_frame* parent);
-	
-	void apply(wxCommandEvent& event);
-	void change(wxCommandEvent& event);
-	void add(wxCommandEvent& event);
-	void remove(wxCommandEvent& event);
-	~preset_frame();
-};
-
 
 class main_frame : public MyFrame1 {
 	std::vector<std::string> configurations;
@@ -182,12 +165,6 @@ class main_frame : public MyFrame1 {
 		zone << colour;
 		zone.close();
 	}
-	
-	
-	/*virtual void open_presets(wxCommandEvent& event) {
-		preset_frame frame(this);
-		frame.ShowModal();
-	}*/
 	
 	
 	void load_palettes() {
@@ -321,133 +298,6 @@ class main_frame : public MyFrame1 {
 		file.close();
 	}
 };
-
-
-preset_frame::preset_frame(main_frame* parent) : PresetDialog(parent) {
-	// Load presets from file
-	std::string home = getenv("HOME");
-	std::ifstream file;
-	parent->open_file(file, home + "/.config/omenrgb.cfg");
-	
-	if (!file)
-		return;
-	
-	std::string line;
-	
-	while (std::getline(file, line)) {
-		std::string name;
-		std::array<std::string, 4> colors;
-		std::stringstream ss(line);
-		
-		std::getline(ss, name, '\t');
-		
-		for (int i = 0; i < 4; i++) 
-			std::getline(ss, colors[i], '\t');
-		
-		m_preset->Append(name);
-		configurations.push_back(name);
-		presets.push_back(colors);
-	}
-	
-	file.close();
-}
-
-
-void preset_frame::apply(wxCommandEvent& event) {
-	main_frame* parent = (main_frame*) GetParent();
-	
-	current_preset = m_preset->GetSelection();
-	
-	if (current_preset == wxNOT_FOUND) {
-		current_preset = -1;
-		return;
-	}
-	
-	parent->set_zones(
-		fromhex(presets[current_preset][0]), 
-		fromhex(presets[current_preset][1]), 
-		fromhex(presets[current_preset][2]), 
-		fromhex(presets[current_preset][3])
-	);
-	
-	parent->write_device("zone00", presets[current_preset][0]);
-	parent->write_device("zone01", presets[current_preset][1]);
-	parent->write_device("zone02", presets[current_preset][2]);
-	parent->write_device("zone03", presets[current_preset][3]);
-}
-
-
-void preset_frame::change(wxCommandEvent& event) {
-	main_frame* parent = (main_frame*) GetParent();
-	current_preset = m_preset->GetSelection();
-	
-	if (current_preset == wxNOT_FOUND) {
-		current_preset = -1;
-		return;
-	}
-	
-	std::string preset = configurations[current_preset];
-	wxMessageDialog dialog(NULL, "Do you really want to modify the preset '" + preset +"'?", "Modify Preset...", wxYES_NO | wxICON_QUESTION);
-
-	if (dialog.ShowModal() == wxID_YES)
-		presets[current_preset] = parent->get_zones();
-}
-
-
-void preset_frame::add(wxCommandEvent& event) {
-	TextEntryDialog dialog(this);
-	if (dialog.ShowModal() == wxID_OK) {
-		wxString name = dialog.m_name->GetLineText(0);
-		configurations.push_back(name.ToStdString());
-		m_preset->Append(name);
-		
-		main_frame* parent = (main_frame*) GetParent();
-		presets.push_back(parent->get_zones());
-	}
-}
-
-
-void preset_frame::remove(wxCommandEvent& event) {
-	main_frame* parent = (main_frame*) GetParent();
-	current_preset = m_preset->GetSelection();
-	
-	if (current_preset == wxNOT_FOUND) {
-		current_preset = -1;
-		return;
-	}
-	
-	std::string preset = configurations[current_preset];
-	
-	wxMessageDialog dialog(NULL, "Do you really want to remove the preset '" + preset +"'?", "Remove Preset...", wxYES_NO | wxICON_QUESTION);
-	
-	if (dialog.ShowModal() == wxID_YES) {
-		m_preset->Delete(current_preset);
-		configurations.erase(configurations.begin() + current_preset);
-		presets.erase(presets.begin() + current_preset);
-		current_preset = -1;
-	}
-}
-
-
-preset_frame::~preset_frame() {
-	std::string home = getenv("HOME");
-	main_frame* parent = (main_frame*) GetParent();
-	std::ofstream file;
-	parent->open_file(file, home + "/.config/omenrgb.cfg");
-	
-	if (!file)
-		return;
-		
-	for (int i = 0; i < presets.size(); i++) {
-		file << configurations[i];
-		for (int j = 0; j < 4; j++)
-			file << '\t' << presets[i][j];
-		
-		file << '\n'; 
-	}
-	
-	file.close();
-}
 
 
 bool OmenRGB::OnInit() {

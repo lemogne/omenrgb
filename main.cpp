@@ -55,6 +55,10 @@ class preset_frame : public PresetDialog {
 
 
 class main_frame : public MyFrame1 {
+	std::vector<std::string> configurations;
+	std::vector<std::array<std::string, 4>> palettes;
+	int current_palette = -1;
+	
 	public:
 	main_frame() : MyFrame1(nullptr) {
 		std::vector<int> zone00 = read_device("zone00");
@@ -63,6 +67,7 @@ class main_frame : public MyFrame1 {
 		std::vector<int> zone03 = read_device("zone03");
 
 		set_zones(zone00, zone01, zone02, zone03);
+		load_palettes();
 	}
 	
 	
@@ -75,28 +80,40 @@ class main_frame : public MyFrame1 {
 	
 	
 	std::array<std::string, 4> get_zones() {
-		std::array<std::string, 4> current_preset;
+		std::array<std::string, 4> current_palette;
 		
-		current_preset[0] = colour_as_hex(m_colourPicker1->GetColour());
-		current_preset[1] = colour_as_hex(m_colourPicker2->GetColour());
-		current_preset[2] = colour_as_hex(m_colourPicker3->GetColour());
-		current_preset[3] = colour_as_hex(m_colourPicker4->GetColour());
+		current_palette[0] = colour_as_hex(m_colourPicker1->GetColour());
+		current_palette[1] = colour_as_hex(m_colourPicker2->GetColour());
+		current_palette[2] = colour_as_hex(m_colourPicker3->GetColour());
+		current_palette[3] = colour_as_hex(m_colourPicker4->GetColour());
 		
-		return current_preset;
+		return current_palette;
 	}
 	
 
 	virtual void zone00_change(wxColourPickerEvent& event) {
 		write_device("zone00", event.GetColour());
+		
+		if (current_palette == 0)
+			palettes[0] = get_zones();
 	}
 	virtual void zone01_change(wxColourPickerEvent& event) {
 		write_device("zone01", event.GetColour());
+		
+		if (current_palette == 0)
+			palettes[0] = get_zones();
 	}
 	virtual void zone02_change(wxColourPickerEvent& event) {
 		write_device("zone02", event.GetColour());
+		
+		if (current_palette == 0)
+			palettes[0] = get_zones();
 	}
 	virtual void zone03_change(wxColourPickerEvent& event) {
 		write_device("zone03", event.GetColour());
+		
+		if (current_palette == 0)
+			palettes[0] = get_zones();
 	}
 
 	template <typename T>
@@ -167,9 +184,141 @@ class main_frame : public MyFrame1 {
 	}
 	
 	
-	virtual void open_presets(wxCommandEvent& event) {
+	/*virtual void open_presets(wxCommandEvent& event) {
 		preset_frame frame(this);
 		frame.ShowModal();
+	}*/
+	
+	
+	void load_palettes() {
+		std::string home = getenv("HOME");
+		std::ifstream file;
+		open_file(file, home + "/.config/omenrgb.cfg");
+		
+		if (!file)
+			return;
+		
+		std::string line;
+		
+		m_palettes->Append("Custom");
+		configurations.push_back("Custom");
+		palettes.push_back(get_zones());
+		m_palettes->SetSelection(0);
+		
+		while (std::getline(file, line)) {
+			std::string name;
+			std::array<std::string, 4> colors;
+			std::stringstream ss(line);
+			
+			std::getline(ss, name, '\t');
+			
+			for (int i = 0; i < 4; i++) 
+				std::getline(ss, colors[i], '\t');
+			
+			m_palettes->Append(name);
+			configurations.push_back(name);
+			palettes.push_back(colors);
+		}
+		
+		file.close();
+	}
+
+
+	void apply(wxCommandEvent& event) {
+		current_palette = m_palettes->GetSelection();
+		
+		if (current_palette == wxNOT_FOUND) {
+			current_palette = -1;
+			return;
+		}
+		
+		set_zones(
+			fromhex(palettes[current_palette][0]), 
+			fromhex(palettes[current_palette][1]), 
+			fromhex(palettes[current_palette][2]), 
+			fromhex(palettes[current_palette][3])
+		);
+		
+		write_device("zone00", palettes[current_palette][0]);
+		write_device("zone01", palettes[current_palette][1]);
+		write_device("zone02", palettes[current_palette][2]);
+		write_device("zone03", palettes[current_palette][3]);
+	}
+
+
+	void change(wxCommandEvent& event) {
+		main_frame* parent = (main_frame*) GetParent();
+		current_palette = m_palettes->GetSelection();
+		
+		if (current_palette == wxNOT_FOUND) {
+			current_palette = -1;
+			return;
+		} else if (current_palette == 0) {
+			palettes[0] = get_zones();
+			return;
+		}
+		
+		std::string palette = configurations[current_palette];
+		wxMessageDialog dialog(NULL, "Do you really want to modify the palette '" + palette +"'?", "Modify Palette...", wxYES_NO | wxICON_QUESTION);
+
+		if (dialog.ShowModal() == wxID_YES)
+			palettes[current_palette] = get_zones();
+	}
+
+
+	void add(wxCommandEvent& event) {
+		TextEntryDialog dialog(this);
+		if (dialog.ShowModal() == wxID_OK) {
+			wxString name = dialog.m_name->GetLineText(0);
+			configurations.push_back(name.ToStdString());
+			m_palettes->Append(name);
+			
+			main_frame* parent = (main_frame*) GetParent();
+			palettes.push_back(get_zones());
+		}
+	}
+
+
+	void remove(wxCommandEvent& event) {
+		current_palette = m_palettes->GetSelection();
+		
+		if (current_palette == wxNOT_FOUND) {
+			current_palette = -1;
+			return;
+		}
+		
+		std::string palette = configurations[current_palette];
+		
+		wxMessageDialog dialog(NULL, "Do you really want to remove the palette '" + palette +"'?", "Remove Palette...", wxYES_NO | wxICON_QUESTION);
+		
+		if (dialog.ShowModal() == wxID_YES) {
+			m_palettes->Delete(current_palette);
+			configurations.erase(configurations.begin() + current_palette);
+			palettes.erase(palettes.begin() + current_palette);
+			current_palette = -1;
+		}
+	}
+	
+
+	void save_config() {
+		std::string home = getenv("HOME");
+		std::ofstream file;
+		open_file(file, home + "/.config/omenrgb.cfg");
+		
+		if (!file) {
+			std::cerr << "Could not open config file!\n";
+			return;
+		}
+			
+		for (int i = 1; i < palettes.size(); i++) {
+			file << configurations[i];
+			for (int j = 0; j < 4; j++)
+				file << '\t' << palettes[i][j];
+			
+			file << '\n'; 
+		}
+		
+		file.close();
 	}
 };
 
@@ -304,6 +453,7 @@ preset_frame::~preset_frame() {
 bool OmenRGB::OnInit() {
 	main_frame* frame = new main_frame();
 	frame->ShowModal();
+	frame->save_config();
 	Exit();
 	return true;
 }

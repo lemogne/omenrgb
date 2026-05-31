@@ -42,7 +42,7 @@ class MyFrame1 : public wxDialog
 		wxNotebook* m_notebook1;
 		wxPanel* m_panel1;
 		wxStaticText* m_staticText10;
-		wxChoice* m_choice3;
+		wxChoice* m_palettes;
 		wxButton* m_button_add;
 		wxButton* m_button_delete;
 		wxCollapsiblePane* m_collapsiblePane1;
@@ -66,13 +66,14 @@ class MyFrame1 : public wxDialog
 		wxButton* m_button_delete1;
 
 		// Virtual event handlers, override them in your derived class
+		virtual void apply( wxCommandEvent& event ) { event.Skip(); }
 		virtual void add( wxCommandEvent& event ) { event.Skip(); }
 		virtual void remove( wxCommandEvent& event ) { event.Skip(); }
 		virtual void zone00_change( wxColourPickerEvent& event ) { event.Skip(); }
 		virtual void zone01_change( wxColourPickerEvent& event ) { event.Skip(); }
 		virtual void zone02_change( wxColourPickerEvent& event ) { event.Skip(); }
 		virtual void zone03_change( wxColourPickerEvent& event ) { event.Skip(); }
-		virtual void apply( wxCommandEvent& event ) { event.Skip(); }
+		virtual void change( wxCommandEvent& event ) { event.Skip(); }
 
 
 	public:

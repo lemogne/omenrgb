@@ -30,10 +30,10 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_staticText10->Wrap( -1 );
 	bSizer9->Add( m_staticText10, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
-	wxArrayString m_choice3Choices;
-	m_choice3 = new wxChoice( m_panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice3Choices, 0 );
-	m_choice3->SetSelection( 0 );
-	bSizer9->Add( m_choice3, 1, wxALL, 5 );
+	wxArrayString m_palettesChoices;
+	m_palettes = new wxChoice( m_panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_palettesChoices, 0 );
+	m_palettes->SetSelection( 0 );
+	bSizer9->Add( m_palettes, 1, wxALL, 5 );
 
 
 	bSizer7->Add( bSizer9, 0, wxEXPAND, 5 );
@@ -92,7 +92,7 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_colourPicker4 = new wxColourPickerCtrl( m_collapsiblePane1->GetPane(), wxID_ANY, *wxBLACK, wxDefaultPosition, wxDefaultSize, wxCLRP_DEFAULT_STYLE );
 	fgSizer4->Add( m_colourPicker4, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
-	m_button_set = new wxButton( m_collapsiblePane1->GetPane(), wxID_ANY, wxT("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_button_set = new wxButton( m_collapsiblePane1->GetPane(), wxID_ANY, wxT("Save..."), wxDefaultPosition, wxDefaultSize, 0 );
 
 	m_button_set->SetBitmap( wxArtProvider::GetBitmap( wxASCII_STR(wxART_TICK_MARK), wxASCII_STR(wxART_BUTTON) ) );
 	m_button_set->SetBitmapDisabled( wxNullBitmap );
@@ -195,13 +195,14 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	this->Centre( wxBOTH );
 
 	// Connect Events
+	m_palettes->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MyFrame1::apply ), NULL, this );
 	m_button_add->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );
 	m_colourPicker1->Connect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone00_change ), NULL, this );
 	m_colourPicker2->Connect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone01_change ), NULL, this );
 	m_colourPicker3->Connect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone02_change ), NULL, this );
 	m_colourPicker4->Connect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone03_change ), NULL, this );
-	m_button_set->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::apply ), NULL, this );
+	m_button_set->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::change ), NULL, this );
 	m_button_add1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );
 }
@@ -209,13 +210,14 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 MyFrame1::~MyFrame1()
 {
 	// Disconnect Events
+	m_palettes->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MyFrame1::apply ), NULL, this );
 	m_button_add->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );
 	m_colourPicker1->Disconnect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone00_change ), NULL, this );
 	m_colourPicker2->Disconnect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone01_change ), NULL, this );
 	m_colourPicker3->Disconnect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone02_change ), NULL, this );
 	m_colourPicker4->Disconnect( wxEVT_COMMAND_COLOURPICKER_CHANGED, wxColourPickerEventHandler( MyFrame1::zone03_change ), NULL, this );
-	m_button_set->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::apply ), NULL, this );
+	m_button_set->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::change ), NULL, this );
 	m_button_add1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );
 

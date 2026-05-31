@@ -252,6 +252,8 @@ class main_frame : public MyFrame1 {
 			
 			main_frame* parent = (main_frame*) GetParent();
 			palettes.push_back(get_zones());
+			
+			m_palettes->SetSelection(palettes.size() - 1);
 		}
 	}
 

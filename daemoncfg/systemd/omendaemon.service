@@ -1,0 +1,12 @@
+[Unit]
+Description=A daemon for setting keyboard lights and animations on HP OMEN laptops
+Documentation=https://github.com/lemogne/omenrgb
+
+[Service]
+Type=simple
+ExecStart=omendaemon
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+

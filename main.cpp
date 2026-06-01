@@ -1,4 +1,5 @@
 #include "omenrgb.cpp"
+#include "omenlib.hpp"
 #include <wx/app.h> 
 #include <wx/msgdlg.h>
 #include <fstream>
@@ -75,25 +76,25 @@ class main_frame : public MyFrame1 {
 	
 
 	virtual void zone00_change(wxColourPickerEvent& event) {
-		write_device("zone00", event.GetColour());
+		omenlib::set_color(0, colour_as_hex(event.GetColour()));
 		
 		if (current_palette == 0)
 			palettes[0] = get_zones();
 	}
 	virtual void zone01_change(wxColourPickerEvent& event) {
-		write_device("zone01", event.GetColour());
+		omenlib::set_color(1, colour_as_hex(event.GetColour()));
 		
 		if (current_palette == 0)
 			palettes[0] = get_zones();
 	}
 	virtual void zone02_change(wxColourPickerEvent& event) {
-		write_device("zone02", event.GetColour());
+		omenlib::set_color(2, colour_as_hex(event.GetColour()));
 		
 		if (current_palette == 0)
 			palettes[0] = get_zones();
 	}
 	virtual void zone03_change(wxColourPickerEvent& event) {
-		write_device("zone03", event.GetColour());
+		omenlib::set_color(3, colour_as_hex(event.GetColour()));
 		
 		if (current_palette == 0)
 			palettes[0] = get_zones();
@@ -150,22 +151,6 @@ class main_frame : public MyFrame1 {
 		return vec;
 	}
 	
-
-	void write_device(std::string dev, wxColour colour) {
-		write_device(dev, colour_as_hex(colour));
-	}
-	
-
-	void write_device(std::string dev, std::string colour) {
-		std::ofstream zone;
-		
-		if (open_file(zone, "/sys/devices/platform/hp-wmi/rgb_zones/" + dev))
-			return;
-		
-		zone << colour;
-		zone.close();
-	}
-	
 	
 	void load_palettes() {
 		std::string home = getenv("HOME");
@@ -216,10 +201,10 @@ class main_frame : public MyFrame1 {
 			fromhex(palettes[current_palette][3])
 		);
 		
-		write_device("zone00", palettes[current_palette][0]);
-		write_device("zone01", palettes[current_palette][1]);
-		write_device("zone02", palettes[current_palette][2]);
-		write_device("zone03", palettes[current_palette][3]);
+		omenlib::set_color(0, palettes[current_palette][0]);
+		omenlib::set_color(1, palettes[current_palette][1]);
+		omenlib::set_color(2, palettes[current_palette][2]);
+		omenlib::set_color(3, palettes[current_palette][3]);
 	}
 
 
@@ -303,9 +288,11 @@ class main_frame : public MyFrame1 {
 
 
 bool OmenRGB::OnInit() {
+	omenlib::init();
 	main_frame* frame = new main_frame();
 	frame->ShowModal();
 	frame->save_config();
 	Exit();
+	omenlib::deinit();
 	return true;
 }

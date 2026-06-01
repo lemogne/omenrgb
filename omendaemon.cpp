@@ -166,6 +166,7 @@ void term(int signum) {
 
 
 void set_rgb(int zone, char* colour) {
+	std::cout << colour;
 	write(zone_fd[zone], colour, 6);
 }
 
@@ -182,7 +183,7 @@ void set_rgb(int zone, char* colour) {
 // QP - queries currently used palette
 // RA - reload animations
 // RP - reload palette
-// Sx - sets speed to x (0 - 255)
+// Sx - sets speed to x (float)
 //
 // Response is fed through separate response pipe [responses currently unsupported]
 // Response data types:
@@ -191,98 +192,116 @@ void set_rgb(int zone, char* colour) {
 // Ii - integer i
 // Bb - boolean b (0 - 1)
 // Ex - error string "x"
+void exec_command(std::string command) {
+	switch (command[0]) {
+		case 'Z': {
+			if (command.length() < 8) {
+				std::cerr << "Invalid command length " << command.length() <<'\n';
+				return;
+			}
+			
+			anim = 0;
+			int zone = command[1] - '0';
+			std::cout << zone << '\n';
+			
+			if (zone < 0 || zone >= ZONE_N) {
+				std::cerr << "Invalid zone: " << zone << '\n';
+				return;
+			}
+			
+			buffer[8] = 0;
+			
+			set_rgb(zone, &command[2]);
+		} break;
+		
+		case 'A': {
+			anim = std::atoi(&command[1]);
+			
+			if (anim < 0 || anim > animations.size()) {
+				std::cerr << "Invalid animation: " << anim << '\n';
+				anim = 0;
+				return;
+			} else if (animations[anim - 1].size() == 0) {
+				std::cerr << "No steps in animation " << anim << '\n';
+				anim = 0;
+				return;
+			}
+			
+			anim_step = 0;
+			gettimeofday(&current_time, NULL);
+			step_start = current_time;
+		} break;
+
+		case 'P': {
+			pal = std::atoi(&command[1]);
+			
+			if (pal < 0 || pal > palettes.size()) {
+				std::cerr << "Invalid palette: " << pal << '\n';
+				pal = 0;
+				return;
+			} else if (palettes.size() > 0 && palettes[pal - 1].size() == 0) {
+				std::cerr << "No colours in palette: " << pal << '\n';
+				pal = 0;
+				return;
+			}
+			
+			anim_step = 0;
+			gettimeofday(&current_time, NULL);
+			step_start = current_time;
+		} break;
+
+		case 'R': {
+			if (buffer[1] == 'A')
+				init_anim();
+			else if (buffer[1] == 'P')
+				init_palette();
+			else 
+				std::cerr << "Invalid command: " << command << '\n';
+			
+			anim = 0;
+			pal = 0;
+		} break;
+		
+		case 'S': {
+			speed = std::stof(&command[1]);
+			anim_step = 0;
+			gettimeofday(&current_time, NULL);
+			step_start = current_time;
+		} break;
+		
+		case 'B': {
+			brightness = std::stof(&command[1]);
+			
+			if (brightness < 0.0f || brightness > 1.0f) {
+				std::cerr << "Invalid brightness: " << brightness << '\n';
+				brightness = 1.0f;
+			}
+		} break;
+		
+		default:
+		std::cerr << "Invalid command: " << command[0] << '\n';
+	}
+}
+
+
 
 void read_pipe() {
+	static std::string command;
 	int n = read(fd, buffer, sizeof(buffer) - 1);
+	buffer[n] = 0;
 	
-	if (n) {
-		switch (buffer[0]) {
-			case 'Z': {
-				if (n < 8) {
-					std::cerr << "Invalid command length " << n <<'\n';
-					break;
-				}
-				
-				anim = 0;
-				int zone = buffer[1] - '0';
-				
-				if (zone < 0 || zone >= ZONE_N) {
-					std::cerr << "Invalid zone: " << zone << '\n';
-					break;
-				}
-				
-				buffer[8] = 0;
-				
-				set_rgb(zone, &buffer[2]);
-			} break;
-			
-			case 'A': {
-				anim = std::atoi(&buffer[1]);
-				
-				if (anim < 0 || anim > animations.size()) {
-					std::cerr << "Invalid animation: " << anim << '\n';
-					anim = 0;
-					break;
-				} else if (animations[anim - 1].size() == 0) {
-					std::cerr << "No steps in animation " << anim << '\n';
-					anim = 0;
-					break;
-				}
-				
-				anim_step = 0;
-				gettimeofday(&current_time, NULL);
-				step_start = current_time;
-			} break;
-
-			case 'P': {
-				pal = std::atoi(&buffer[1]);
-				
-				if (pal < 0 || pal > palettes.size()) {
-					std::cerr << "Invalid palette: " << pal << '\n';
-					pal = 0;
-					break;
-				} else if (palettes.size() > 0 && palettes[pal - 1].size() == 0) {
-					std::cerr << "No colours in palette: " << pal << '\n';
-					pal = 0;
-					break;
-				}
-				
-				anim_step = 0;
-				gettimeofday(&current_time, NULL);
-				step_start = current_time;
-			} break;
-
-			case 'R': {
-				if (buffer[1] == 'A')
-					init_anim();
-				else if (buffer[1] == 'P')
-					init_palette();
-				else 
-					std::cerr << "Invalid command: " << buffer << '\n';
-				
-				anim = 0;
-				pal = 0;
-			} break;
-			
-			case 'S': {
-				speed = std::stof(&buffer[1]);
-				anim_step = 0;
-				gettimeofday(&current_time, NULL);
-				step_start = current_time;
-			} break;
-			
-			case 'B': {
-				brightness = std::stof(&buffer[1]);
-				
-				if (brightness < 0.0f || brightness > 1.0f) {
-					std::cerr << "Invalid brightness: " << brightness << '\n';
-					brightness = 1.0f;
-				}
-			} break;
-			
-			default:
-			std::cerr << "Invalid command: " << buffer[0] << '\n';
+	if (n > 0) {
+		int k = 0, l;
+		std::string input(buffer);
+		
+		while ((l = input.find('\n', k)) != std::string::npos) {
+			command += input.substr(k, l - k + 1);
+			exec_command(command);
+			command.clear();
+			k = l + 1;
 		}
+		
+		command = input.substr(k);
 	}
 }
 

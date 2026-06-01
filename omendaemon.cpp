@@ -166,7 +166,6 @@ void term(int signum) {
 
 
 void set_rgb(int zone, char* colour) {
-	std::cout << colour;
 	write(zone_fd[zone], colour, 6);
 }
 
@@ -202,7 +201,6 @@ void exec_command(std::string command) {
 			
 			anim = 0;
 			int zone = command[1] - '0';
-			std::cout << zone << '\n';
 			
 			if (zone < 0 || zone >= ZONE_N) {
 				std::cerr << "Invalid zone: " << zone << '\n';

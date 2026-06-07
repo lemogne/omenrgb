@@ -21,8 +21,6 @@
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/icon.h>
-#include <wx/clrpicker.h>
-#include <wx/collpane.h>
 #include <wx/panel.h>
 #include <wx/slider.h>
 #include <wx/notebook.h>
@@ -39,29 +37,23 @@ class MyFrame1 : public wxDialog
 	private:
 
 	protected:
+		wxBoxSizer* bSizer1;
 		wxNotebook* m_notebook1;
 		wxPanel* m_panel1;
+		wxBoxSizer* bSizer7;
 		wxStaticText* m_staticText10;
 		wxChoice* m_palettes;
-		wxButton* m_button_add;
+		wxButton* m_button_new;
 		wxButton* m_button_delete;
-		wxCollapsiblePane* m_collapsiblePane1;
-		wxStaticText* m_staticText2;
-		wxColourPickerCtrl* m_colourPicker1;
-		wxStaticText* m_staticText3;
-		wxColourPickerCtrl* m_colourPicker2;
-		wxStaticText* m_staticText21;
-		wxColourPickerCtrl* m_colourPicker3;
-		wxStaticText* m_staticText31;
-		wxColourPickerCtrl* m_colourPicker4;
+		wxGridSizer* palette_sizer;
+		wxBoxSizer* bSizer13;
 		wxButton* m_button_set;
-		wxButton* m_button10;
-		wxButton* m_button101;
+		wxButton* m_button_add;
 		wxPanel* m_panel2;
 		wxStaticText* m_staticText11;
 		wxSlider* m_slider1;
 		wxStaticText* m_staticText9;
-		wxChoice* m_choice2;
+		wxChoice* m_animations;
 		wxButton* m_button_add1;
 		wxButton* m_button_delete1;
 
@@ -69,11 +61,11 @@ class MyFrame1 : public wxDialog
 		virtual void apply( wxCommandEvent& event ) { event.Skip(); }
 		virtual void add( wxCommandEvent& event ) { event.Skip(); }
 		virtual void remove( wxCommandEvent& event ) { event.Skip(); }
-		virtual void zone00_change( wxColourPickerEvent& event ) { event.Skip(); }
-		virtual void zone01_change( wxColourPickerEvent& event ) { event.Skip(); }
-		virtual void zone02_change( wxColourPickerEvent& event ) { event.Skip(); }
-		virtual void zone03_change( wxColourPickerEvent& event ) { event.Skip(); }
-		virtual void change( wxCommandEvent& event ) { event.Skip(); }
+		virtual void save_config( wxCommandEvent& event ) { event.Skip(); }
+		virtual void add_palette_color_event( wxCommandEvent& event ) { event.Skip(); }
+		virtual void set_speed( wxScrollEvent& event ) { event.Skip(); }
+		virtual void set_speed( wxCommandEvent& event ) { event.Skip(); }
+		virtual void animation_change( wxCommandEvent& event ) { event.Skip(); }
 
 
 	public:
@@ -82,37 +74,6 @@ class MyFrame1 : public wxDialog
 		MyFrame1( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("OMEN RGB"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE|wxDIALOG_NO_PARENT );
 
 		~MyFrame1();
-
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// Class PresetDialog
-///////////////////////////////////////////////////////////////////////////////
-class PresetDialog : public wxDialog
-{
-	private:
-
-	protected:
-		wxStaticText* m_staticText9;
-		wxChoice* m_preset;
-		wxButton* m_button_apply;
-		wxButton* m_button_set;
-		wxButton* m_button_add;
-		wxButton* m_button_delete;
-
-		// Virtual event handlers, override them in your derived class
-		virtual void close( wxCloseEvent& event ) { event.Skip(); }
-		virtual void apply( wxCommandEvent& event ) { event.Skip(); }
-		virtual void change( wxCommandEvent& event ) { event.Skip(); }
-		virtual void add( wxCommandEvent& event ) { event.Skip(); }
-		virtual void remove( wxCommandEvent& event ) { event.Skip(); }
-
-
-	public:
-
-		PresetDialog( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("OMEN RGB - Presets"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
-
-		~PresetDialog();
 
 };
 

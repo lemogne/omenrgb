@@ -98,7 +98,7 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_staticText12->Wrap( -1 );
 	fgSizer2->Add( m_staticText12, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
 
-	m_slider2 = new wxSlider( m_panel2, wxID_ANY, 50, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
+	m_slider2 = new wxSlider( m_panel2, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
 	fgSizer2->Add( m_slider2, 0, wxALL|wxEXPAND, 5 );
 
 	m_staticText9 = new wxStaticText( m_panel2, wxID_ANY, wxT("Animation"), wxDefaultPosition, wxDefaultSize, 0 );

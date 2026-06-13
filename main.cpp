@@ -370,7 +370,7 @@ class main_frame : public MyFrame1 {
 	
 	
 	virtual void set_brightness(wxScrollEvent& event) {
-		float v = std::exp((m_slider2->GetValue() / 25.0f) - 2.0f);
+		float v = m_slider2->GetValue() / 100.0f;
 		omenlib::set_brightness(v);
 	}
 	

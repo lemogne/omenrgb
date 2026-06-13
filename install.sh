@@ -39,6 +39,21 @@ fi
 echo -e "\e[93mBuilding \e[92momenrgb...\e[0m"
 chmod +x build.sh
 ./build.sh
+
+echo -e "\e[93mBuilding \e[92momendaemon...\e[0m"
+g++ omendaemon.cpp -o omendaemon
+
 echo -e "\e[93mInstalling to \e[92m/usr/bin/\e[93m...\e[0m"
 cp -t /usr/bin/ omenrgb
+cp -t /usr/bin/ omendaemon
+
+if [ "$(ps --no-headers -o comm 1)" == "systemd" ]; then
+	echo -e "\e[93mSetting up systmd service\e[93m...\e[0m"
+	cp -t /etc/systemd/user daemoncfg/systemd/omendaemon.service
+	systemctl -M "$SUDO_USER"@ --user daemon-reload
+	systemctl -M "$SUDO_USER"@ --user enable omendaemon.service
+	systemctl -M "$SUDO_USER"@ --user start omendaemon.service
+fi
+
+
 echo -e "\e[92mDone. Reboot for the changes to take effect.\e[0m"

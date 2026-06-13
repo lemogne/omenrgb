@@ -1,3 +1,3 @@
 #!/bin/sh
 echo $@
-g++ `wx-config --cxxflags` $@ main.cpp -o omenrgb `wx-config --libs`
+g++ `wx-config --cxxflags` $@ main.cpp omenlib.cpp -o omenrgb `wx-config --libs`

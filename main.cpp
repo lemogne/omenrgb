@@ -124,7 +124,7 @@ class main_frame : public MyFrame1 {
 	
 	
 	void add_palette_color(wxColour color) {
-		int id = palette_colors.size() - 1;
+		int id = palette_colors.size();
 		palette_colors.push_back(palette_color(this->m_panel1, id));
 		palette_colors.back().ctrl->SetColour(color);
 		palette_colors.back().ctrl->Connect(id, wxEVT_COLOURPICKER_CHANGED, wxColourPickerEventHandler(main_frame::zone_change), NULL, this);

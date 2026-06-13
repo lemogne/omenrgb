@@ -368,6 +368,12 @@ class main_frame : public MyFrame1 {
 		omenlib::set_speed(v);
 	}
 	
+	
+	virtual void set_brightness(wxScrollEvent& event) {
+		float v = std::exp((m_slider2->GetValue() / 25.0f) - 2.0f);
+		omenlib::set_brightness(v);
+	}
+	
 
 	void save_config() {
 		if (!palettes_modified)

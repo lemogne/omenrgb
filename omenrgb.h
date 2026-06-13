@@ -52,6 +52,8 @@ class MyFrame1 : public wxDialog
 		wxPanel* m_panel2;
 		wxStaticText* m_staticText11;
 		wxSlider* m_slider1;
+		wxStaticText* m_staticText12;
+		wxSlider* m_slider2;
 		wxStaticText* m_staticText9;
 		wxChoice* m_animations;
 		wxButton* m_button_add1;
@@ -65,6 +67,8 @@ class MyFrame1 : public wxDialog
 		virtual void add_palette_color_event( wxCommandEvent& event ) { event.Skip(); }
 		virtual void set_speed( wxScrollEvent& event ) { event.Skip(); }
 		virtual void set_speed( wxCommandEvent& event ) { event.Skip(); }
+		virtual void set_brightness( wxScrollEvent& event ) { event.Skip(); }
+		virtual void set_brightness( wxCommandEvent& event ) { event.Skip(); }
 		virtual void animation_change( wxCommandEvent& event ) { event.Skip(); }
 
 

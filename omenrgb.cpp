@@ -94,6 +94,13 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_slider1 = new wxSlider( m_panel2, wxID_ANY, 50, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
 	fgSizer2->Add( m_slider1, 0, wxALL|wxEXPAND, 5 );
 
+	m_staticText12 = new wxStaticText( m_panel2, wxID_ANY, wxT("Brightness"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText12->Wrap( -1 );
+	fgSizer2->Add( m_staticText12, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
+
+	m_slider2 = new wxSlider( m_panel2, wxID_ANY, 50, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
+	fgSizer2->Add( m_slider2, 0, wxALL|wxEXPAND, 5 );
+
 	m_staticText9 = new wxStaticText( m_panel2, wxID_ANY, wxT("Animation"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText9->Wrap( -1 );
 	fgSizer2->Add( m_staticText9, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT, 5 );
@@ -168,6 +175,25 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_slider1->Connect( wxEVT_SCROLL_THUMBRELEASE, wxScrollEventHandler( MyFrame1::set_speed ), NULL, this );
 	m_slider1->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( MyFrame1::set_speed ), NULL, this );
 	m_slider1->Connect( wxEVT_SLIDER, wxCommandEventHandler( MyFrame1::set_speed ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_TOP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_BOTTOM, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_LINEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_LINEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_PAGEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_PAGEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_THUMBTRACK, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_THUMBRELEASE, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_TOP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_BOTTOM, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_LINEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_LINEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_PAGEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_PAGEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_THUMBTRACK, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_THUMBRELEASE, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Connect( wxEVT_SLIDER, wxCommandEventHandler( MyFrame1::set_brightness ), NULL, this );
 	m_animations->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MyFrame1::animation_change ), NULL, this );
 	m_button_add1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );
@@ -200,6 +226,25 @@ MyFrame1::~MyFrame1()
 	m_slider1->Disconnect( wxEVT_SCROLL_THUMBRELEASE, wxScrollEventHandler( MyFrame1::set_speed ), NULL, this );
 	m_slider1->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( MyFrame1::set_speed ), NULL, this );
 	m_slider1->Disconnect( wxEVT_SLIDER, wxCommandEventHandler( MyFrame1::set_speed ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_TOP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_BOTTOM, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_LINEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_LINEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_PAGEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_PAGEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_THUMBTRACK, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_THUMBRELEASE, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_TOP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_BOTTOM, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_LINEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_LINEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_PAGEUP, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_PAGEDOWN, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_THUMBTRACK, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_THUMBRELEASE, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( MyFrame1::set_brightness ), NULL, this );
+	m_slider2->Disconnect( wxEVT_SLIDER, wxCommandEventHandler( MyFrame1::set_brightness ), NULL, this );
 	m_animations->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MyFrame1::animation_change ), NULL, this );
 	m_button_add1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );

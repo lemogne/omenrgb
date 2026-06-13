@@ -200,6 +200,7 @@ void exec_command(std::string command) {
 			}
 			
 			anim = 0;
+			pal = 0;
 			int zone = command[1] - '0';
 			
 			if (zone < 0 || zone >= ZONE_N) {
@@ -219,7 +220,7 @@ void exec_command(std::string command) {
 				std::cerr << "Invalid animation: " << anim << '\n';
 				anim = 0;
 				return;
-			} else if (animations[anim - 1].size() == 0) {
+			} else if (anim > 0 && animations[anim - 1].size() == 0) {
 				std::cerr << "No steps in animation " << anim << '\n';
 				anim = 0;
 				return;
@@ -237,7 +238,7 @@ void exec_command(std::string command) {
 				std::cerr << "Invalid palette: " << pal << '\n';
 				pal = 0;
 				return;
-			} else if (palettes.size() > 0 && palettes[pal - 1].size() == 0) {
+			} else if (pal > 0 && palettes.size() > 0 && palettes[pal - 1].size() == 0) {
 				std::cerr << "No colours in palette: " << pal << '\n';
 				pal = 0;
 				return;

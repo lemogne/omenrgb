@@ -75,8 +75,9 @@ void init_zone_fd() {
 
 
 void parse_colour(color* c, std::string s) {
-	for (size_t i = 0; i < 3; i++) 
+	for (size_t i = 0; i < 3; i++) {
 		(*c)[i] = (unsigned char) std::stoi(s.substr(2 * i, 2), nullptr, 16);
+	}
 }
 
 
@@ -146,6 +147,8 @@ void init_palette() {
 	std::string line;
 	
 	while (std::getline(file, line)) {
+		palette p;
+		color c;
 		std::string el;
 		std::stringstream ss(line);
 		
@@ -180,11 +183,15 @@ void set_rgb(int zone, char* colour) {
 void get_rgb(int zone) {
 	char line[256];
 	
-	read(zone_fd[zone], line, 255);
+	int k = read(zone_fd[zone], line, 255);
+	line[k] = 0;
 	int i = 0, j = 0;
 	bool is_num = false;
 	
 	for (char& c : line) {
+		if (j >= 3)
+			break;
+		
 		switch (c) {
 			case 0: goto out;
 			case '0' ... '9':
@@ -195,7 +202,6 @@ void get_rgb(int zone) {
 			
 			default:
 				if (is_num) {
-					std::cout << i << '\n';
 					palettes[0][zone][j++] = i;
 					is_num = false;
 					i = 0;
@@ -205,9 +211,8 @@ void get_rgb(int zone) {
 	}
 	
 	out:
-	if (is_num) {
+	if (is_num && j < 3) {
 		palettes[0][zone][j++] = i;
-		std::cout << i << '\n';
 	}
 }
 
@@ -297,6 +302,8 @@ void exec_command(std::string command) {
 				std::cerr << "No colours in palette: " << pal << '\n';
 				pal = 0;
 				return;
+			} else if (anim == 0) {
+				set_static();
 			}
 			
 			anim_step = 0;
@@ -392,8 +399,9 @@ void set_static() {
 	
 	for (int zone = 0; zone < ZONE_N; zone++) {
 		for (int i = 0; i < 3; i++) {
-			int colour = current_palette[zone][i];
+			int colour = current_palette[zone % current_palette.size()][i];
 			colour *= brightness;
+			
 			
 			colour_hex[2 * i] = hex(colour >> 4);
 			colour_hex[2 * i + 1] = hex(colour);

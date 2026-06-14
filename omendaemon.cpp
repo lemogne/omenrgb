@@ -42,6 +42,8 @@ int anim_step = 0;
 float brightness = 1.0f;
 float speed = 1.0f;
 
+void set_static();
+
 
 void close_zone_fd() {
 	for (int i = 0; i < ZONE_N; i++) 
@@ -61,7 +63,7 @@ void cleanup() {
 void init_zone_fd() {
 	for (int i = 0; i < ZONE_N; i++) {
 		std::string p = zones_path + "zone0" + std::to_string(i);
-		zone_fd[i] = open(p.c_str(), O_WRONLY);
+		zone_fd[i] = open(p.c_str(), O_RDWR);
 		
 		if (zone_fd[i] < 0) {
 			std::cerr << "Couldn't open " << p << " (" << errno << ")\n";
@@ -134,13 +136,18 @@ void init_palette() {
 	
 	palettes.clear();
 	
+	// Custom palette
+	palette p;
+	color c;
+	for (int i = 0; i < 4; i++)
+		p.push_back(c);
+	palettes.push_back(p);
+	
 	std::string line;
 	
 	while (std::getline(file, line)) {
 		std::string el;
 		std::stringstream ss(line);
-		palette p;
-		color c;
 		
 		if (line.length() == 0 || line[0] == '#') 
 			continue;
@@ -168,6 +175,45 @@ void term(int signum) {
 void set_rgb(int zone, char* colour) {
 	write(zone_fd[zone], colour, 6);
 }
+
+
+void get_rgb(int zone) {
+	char line[256];
+	
+	read(zone_fd[zone], line, 255);
+	int i = 0, j = 0;
+	bool is_num = false;
+	
+	for (char& c : line) {
+		switch (c) {
+			case 0: goto out;
+			case '0' ... '9':
+				is_num = true;
+				i *= 10;
+				i += c - '0';
+				continue;
+			
+			default:
+				if (is_num) {
+					std::cout << i << '\n';
+					palettes[0][zone][j++] = i;
+					is_num = false;
+					i = 0;
+				}
+				continue;
+		}
+	}
+	
+	out:
+	if (is_num) {
+		palettes[0][zone][j++] = i;
+		std::cout << i << '\n';
+	}
+}
+
+/*void get_rgb(int zone, char* colour) {
+	read(zone_fd[zone], colour, 6);
+}*/
 
 
 // Reads instructions from controller
@@ -199,18 +245,25 @@ void exec_command(std::string command) {
 				return;
 			}
 			
-			anim = 0;
 			pal = 0;
 			int zone = command[1] - '0';
 			
-			if (zone < 0 || zone >= ZONE_N) {
+			if (zone < 0 || zone > palettes[0].size()) {
 				std::cerr << "Invalid zone: " << zone << '\n';
 				return;
 			}
 			
 			buffer[8] = 0;
 			
-			set_rgb(zone, &command[2]);
+			if (zone < ZONE_N)
+				set_rgb(zone, &command[2]);
+			
+			if (zone == palettes[0].size()) {
+				color c;
+				palettes[0].push_back(c);
+			}
+			
+			parse_colour(&palettes[0][zone], std::string(&command[2]));
 		} break;
 		
 		case 'A': {
@@ -224,6 +277,8 @@ void exec_command(std::string command) {
 				std::cerr << "No steps in animation " << anim << '\n';
 				anim = 0;
 				return;
+			} else if (anim == 0) {
+				set_static();
 			}
 			
 			anim_step = 0;
@@ -238,7 +293,7 @@ void exec_command(std::string command) {
 				std::cerr << "Invalid palette: " << pal << '\n';
 				pal = 0;
 				return;
-			} else if (pal > 0 && palettes.size() > 0 && palettes[pal - 1].size() == 0) {
+			} else if (pal > 0 && palettes.size() > 0 && palettes[pal].size() == 0) {
 				std::cerr << "No colours in palette: " << pal << '\n';
 				pal = 0;
 				return;
@@ -331,6 +386,24 @@ unsigned char hex(unsigned char x) {
 }
 
 
+void set_static() {
+	palette current_palette = palettes[pal];
+	char colour_hex[6];
+	
+	for (int zone = 0; zone < ZONE_N; zone++) {
+		for (int i = 0; i < 3; i++) {
+			int colour = current_palette[zone][i];
+			colour *= brightness;
+			
+			colour_hex[2 * i] = hex(colour >> 4);
+			colour_hex[2 * i + 1] = hex(colour);
+		}
+		
+		set_rgb(zone, colour_hex);
+	}
+}
+
+
 
 void do_anim_step() {
 	gettimeofday(&current_time, NULL);
@@ -361,7 +434,7 @@ void do_anim_step() {
 	
 
 	animation current_animation = animations[anim - 1];
-	palette current_palette = palettes[pal - 1];
+	palette current_palette = palettes[pal];
 	size_t pal_size = current_palette.size();
 	float step_frac = (float) dtime / (float) current_animation[anim_step].duration_ms;
 
@@ -412,12 +485,16 @@ int main() {
 	init_palette();
 	init_anim();
 	
+	for (int i = 0; i < ZONE_N; i++)
+		get_rgb(i);
+	
 	if (err = mkfifo(path.c_str(), 0600)) {
 		if (err == -1) {
 			std::cerr << "Old pipe file was present and automatically removed.\n";
 			remove(path.c_str());
+			mkfifo(path.c_str(), 0600);
 		} else {
-			std::cerr << "Failed to open pipe. (" << err << ")\n";
+			std::cerr << "Failed to create pipe. (" << err << ")\n";
 			return err;
 		}
 	}
@@ -425,7 +502,7 @@ int main() {
 	fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
 	
 	if (fd < 0) {
-		std::cerr << "Could not open pipe. (" << errno << ")\n";
+		std::cerr << "Failed to open pipe. (" << errno << ")\n";
 		remove(path.c_str());
 		return err;
 	}
@@ -438,7 +515,7 @@ int main() {
 		
 		if (anim > animations.size())
 			anim = 0;
-		else if (anim && pal) {
+		else if (anim) {
 			do_anim_step();
 			
 			usleep(16000);	// = 0.016 s

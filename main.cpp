@@ -301,10 +301,10 @@ class main_frame : public MyFrame1 {
 		
 		set_palette_ctrl(palette_int);
 		
-		if (m_animations->GetSelection() == 0) {
+		/*if (m_animations->GetSelection() == 0) {
 			for (int i = 0; i < 4; i++)
 				omenlib::set_color(i, palettes[current_palette][i % palettes[current_palette].size()]);
-		}
+		}*/
 		
 		omenlib::set_palette(current_palette);
 	}

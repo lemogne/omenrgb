@@ -284,6 +284,11 @@ class main_frame : public MyFrame1 {
 		
 		file.close();
 	}
+	
+	
+	void reload_anim(wxCommandEvent& event) {
+		omenlib::reload_animations();
+	}
 
 
 	void apply(wxCommandEvent& event) {

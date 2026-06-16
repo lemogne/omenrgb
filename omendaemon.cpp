@@ -22,9 +22,19 @@ std::string anim_path = "/.config/omenrgb/animations.cfg";
 std::string palette_path = "/.config/omenrgb/palettes.cfg";
 int zone_fd[ZONE_N];
 
+enum palette_wrap_type {
+	WRAP = 0,
+	CLAMP = 1,
+	REFLECT = 2
+};
+
 struct animation_step {
 	float start_colors[ZONE_N];
 	int duration_ms;
+};
+
+struct animation_properties {
+	palette_wrap_type palette_wrap;
 };
 
 typedef std::array<unsigned char,3> color;
@@ -33,6 +43,7 @@ typedef std::vector<animation_step> animation;
 
 std::vector<animation> animations;
 std::vector<palette> palettes;
+std::vector<animation_properties> animation_props;
 timeval step_start;
 timeval current_time;
 
@@ -81,6 +92,24 @@ void parse_colour(color* c, std::string s) {
 }
 
 
+void handle_props(animation_properties& p, std::stringstream& ss) {
+	std::string el;
+	std::getline(ss, el, '=');
+	
+	if (el == ":palette_wrap") {
+		std::getline(ss, el, '=');
+		if (el == "wrap")
+			p.palette_wrap = palette_wrap_type::WRAP;
+		else if (el == "clamp")
+			p.palette_wrap = palette_wrap_type::CLAMP;
+		else if (el == "reflect")
+			p.palette_wrap = palette_wrap_type::REFLECT;
+	} else {
+		std::cerr << "Unknown property: " << el << '\n';
+	}
+}
+
+
 void init_anim() {
 	std::string home = getenv("HOME");
 	std::ifstream file;
@@ -92,7 +121,6 @@ void init_anim() {
 	}
 	
 	animations.clear();
-	
 	std::string line;
 	
 	while (std::getline(file, line)) {
@@ -101,9 +129,16 @@ void init_anim() {
 		animation_step step;
 		
 		if (line.length() == 0 || line[0] < '0' || line[0] > '9') {
-			if (line.length() > 0 && line[0] == '[') 
-				animations.push_back(animation());
-
+			if (line.length() > 0) {
+				if (line[0] == '[') {
+					animation_properties p{.palette_wrap = palette_wrap_type::WRAP};
+					animations.push_back(animation());
+					animation_props.push_back(p);
+				} else if (line[0] == ':') {
+					handle_props(animation_props.back(), ss);
+				}
+			}
+			
 			continue;
 		} else if (animations.size() == 0) {
 			std::cerr << "Apparent animation steps ignored (no preceding animation label): " << line << '\n';
@@ -453,7 +488,19 @@ void do_anim_step() {
 		float next = current_animation[next_step].start_colors[zone];
 		
 		// Compute position in palette from interpolated steps
-		float palette_colour = ((1 - step_frac) * current + step_frac * next) * pal_size;
+		float palette_colour;
+		switch (animation_props[anim - 1].palette_wrap) {
+			default:
+			case WRAP:
+				palette_colour = ((1 - step_frac) * current + step_frac * next) * pal_size;
+				break;
+			
+			case REFLECT:
+			case CLAMP:
+				palette_colour = ((1 - step_frac) * current + step_frac * next) * (pal_size - 1);
+				break;
+		}
+		 
 		
 		if (palette_colour >= pal_size)
 			palette_colour = fmod(palette_colour, pal_size);
@@ -464,8 +511,24 @@ void do_anim_step() {
 		int next_colour = palette_colour + 1;
 		float r = palette_colour - prev_colour;
 		
-		if (next_colour >= pal_size)
-			next_colour %= pal_size;
+		//std::cout << 'r' << r << '\n';
+		//r = (sinf(2 * M_PI * r - M_PI) + 1) / 2;
+		
+		if (next_colour >= pal_size) {
+			switch (animation_props[anim - 1].palette_wrap) {
+			default:
+			case WRAP:
+				next_colour %= pal_size;
+				break;
+			
+			//case REFLECT:	// TODO
+			
+			case CLAMP:
+				next_colour = pal_size - 1;
+				break;
+			}
+		}
+			
 		
 		for (int i = 0; i < 3; i++) {
 			// Interpolate palette colours

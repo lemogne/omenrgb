@@ -58,6 +58,7 @@ class MyFrame1 : public wxDialog
 		wxChoice* m_animations;
 		wxButton* m_button_add1;
 		wxButton* m_button_delete1;
+		wxButton* m_button_reloadanim;
 
 		// Virtual event handlers, override them in your derived class
 		virtual void apply( wxCommandEvent& event ) { event.Skip(); }
@@ -70,6 +71,7 @@ class MyFrame1 : public wxDialog
 		virtual void set_brightness( wxScrollEvent& event ) { event.Skip(); }
 		virtual void set_brightness( wxCommandEvent& event ) { event.Skip(); }
 		virtual void animation_change( wxCommandEvent& event ) { event.Skip(); }
+		virtual void reload_anim( wxCommandEvent& event ) { event.Skip(); }
 
 
 	public:

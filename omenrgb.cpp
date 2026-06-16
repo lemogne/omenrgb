@@ -113,23 +113,26 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 
 	bSizer10->Add( fgSizer2, 0, wxEXPAND, 5 );
 
-	wxFlexGridSizer* fgSizer211;
-	fgSizer211 = new wxFlexGridSizer( 0, 2, 0, 0 );
-	fgSizer211->SetFlexibleDirection( wxBOTH );
-	fgSizer211->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	wxGridSizer* gSizer2;
+	gSizer2 = new wxGridSizer( 0, 2, 0, 0 );
 
 	m_button_add1 = new wxButton( m_panel2, wxID_ANY, wxT("New..."), wxDefaultPosition, wxDefaultSize, 0 );
 
 	m_button_add1->SetBitmap( wxArtProvider::GetBitmap( wxASCII_STR(wxART_PLUS), wxASCII_STR(wxART_BUTTON) ) );
-	fgSizer211->Add( m_button_add1, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
+	gSizer2->Add( m_button_add1, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
 
 	m_button_delete1 = new wxButton( m_panel2, wxID_ANY, wxT("Delete..."), wxDefaultPosition, wxDefaultSize, 0 );
 
 	m_button_delete1->SetBitmap( wxArtProvider::GetBitmap( wxASCII_STR(wxART_DELETE), wxASCII_STR(wxART_BUTTON) ) );
-	fgSizer211->Add( m_button_delete1, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
+	gSizer2->Add( m_button_delete1, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
 
 
-	bSizer10->Add( fgSizer211, 1, wxEXPAND, 5 );
+	bSizer10->Add( gSizer2, 1, wxEXPAND, 5 );
+
+	m_button_reloadanim = new wxButton( m_panel2, wxID_ANY, wxT("Reload Animations"), wxDefaultPosition, wxDefaultSize, 0 );
+
+	m_button_reloadanim->SetBitmap( wxNullBitmap );
+	bSizer10->Add( m_button_reloadanim, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
 
 
 	m_panel2->SetSizer( bSizer10 );
@@ -197,6 +200,7 @@ MyFrame1::MyFrame1( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	m_animations->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MyFrame1::animation_change ), NULL, this );
 	m_button_add1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );
+	m_button_reloadanim->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::reload_anim ), NULL, this );
 }
 
 MyFrame1::~MyFrame1()
@@ -248,6 +252,7 @@ MyFrame1::~MyFrame1()
 	m_animations->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MyFrame1::animation_change ), NULL, this );
 	m_button_add1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::add ), NULL, this );
 	m_button_delete1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::remove ), NULL, this );
+	m_button_reloadanim->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MyFrame1::reload_anim ), NULL, this );
 
 }
 
